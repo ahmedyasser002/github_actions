@@ -5,15 +5,24 @@ name: 02 CI Workflow
 
 on:
   # Run automatically when app code, tests, or this workflow file changes.
-  push:
-    paths:
-      - "app/**"
-      - "tests/**"
-      - ".github/workflows/02-ci.yml"
+  # push:
+  #   paths:
+  #     - "app/**"
+  #     - "tests/**"
+  #     - ".github/workflows/02-ci.yml"
 
-  schedule:
-    # Runs at 00:00 UTC every day
-    - cron: '0 10 * * *'
+  pull_request:
+    branches:
+      - main
+    types:
+      - opened
+      - reopened
+      - synchronize
+
+
+  # schedule:
+  #   # Runs at 00:00 UTC every day
+  #   - cron: '0 10 * * *'
   # Allow a safe manual run before students trigger it with a code change.
   workflow_dispatch:
   
@@ -35,6 +44,17 @@ jobs:
 
       - name: Validate checkout
         run: ls -a
+
+      - name: Run Trivy vulnerability scanner in fs mode
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          severity: 'CRITICAL,HIGH'
+          # trivy-config: trivy.yaml
     
       - name: Set up Python
         # Prepare Python on the runner. This does not change the student laptop.
@@ -55,5 +75,17 @@ jobs:
 
       - name: Print current time
         run: echo "The current time is ${{ env.NOW }}"
+
+      - name: Build an image from Dockerfile
+        run: docker build -t docker.io/ahmedyasser02/my-app:${{ github.sha }} .
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: 'docker.io/ahmedyasser02/my-app:${{ github.sha }}'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH'
 
 
