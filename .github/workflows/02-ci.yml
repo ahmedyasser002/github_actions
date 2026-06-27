@@ -67,10 +67,17 @@ jobs:
       - name: Validate Python is installed
         run: python --version
 
+
+      - name: Lint with Ruff     
+        run: |
+          pip install ruff
+          ruff check .
+
       - name: Run tests
         # This is the key verification step in the CI workflow.
         run: python -m unittest discover -s tests -v
 
+      
       - name: Get current time
         run: echo "NOW=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
         # NOW = "2026-06-27 10:00:00"
