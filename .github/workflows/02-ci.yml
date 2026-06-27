@@ -23,6 +23,9 @@ jobs:
   run-tests:
     # The runner is the temporary machine that executes the steps below.
     runs-on: ubuntu-latest
+    strategy:
+        matrix:
+          version: ["3.11" , "3.12"]
 
     steps:
       - name: Check out repository
@@ -36,7 +39,7 @@ jobs:
         # Prepare Python on the runner. This does not change the student laptop.
         uses: actions/setup-python@v6
         with:
-          python-version: ${{ env.PYTHON_VERSION }}
+          python-version: ${{ matrix.version }}
 
       - name: Validate Python is installed
         run: python --version
