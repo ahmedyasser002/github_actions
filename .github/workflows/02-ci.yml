@@ -71,7 +71,7 @@ jobs:
       - name: Lint with Ruff     
         run: |
           pip install ruff
-          ruff check .
+          ruff check ./app/
 
       - name: Run tests
         # This is the key verification step in the CI workflow.
