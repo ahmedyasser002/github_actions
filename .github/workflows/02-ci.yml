@@ -2,6 +2,7 @@
 # It verifies a change by running tests on a fresh runner.
 name: 02 CI Workflow
 
+
 on:
   # Run automatically when app code, tests, or this workflow file changes.
   push:
@@ -15,7 +16,9 @@ on:
     - cron: '0 10 * * *'
   # Allow a safe manual run before students trigger it with a code change.
   workflow_dispatch:
-
+  
+env:
+  PYTHON_VERSION: "3.12"
 jobs:
   run-tests:
     # The runner is the temporary machine that executes the steps below.
@@ -33,7 +36,7 @@ jobs:
         # Prepare Python on the runner. This does not change the student laptop.
         uses: actions/setup-python@v6
         with:
-          python-version: "3.12"
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Validate Python is installed
         run: python --version
