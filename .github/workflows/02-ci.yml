@@ -42,4 +42,7 @@ jobs:
         run: echo "NOW=$(date +'%Y-%m-%d %H:%M:%S')" >> $GITHUB_ENV
         # NOW = "2026-06-27 10:00:00"
 
+      - name: Print current time
+        run: echo "The current time is ${{ env.NOW }}"
+
 
