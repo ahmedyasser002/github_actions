@@ -9,6 +9,10 @@ on:
       - "app/**"
       - "tests/**"
       - ".github/workflows/02-ci.yml"
+
+  schedule:
+    # Runs at 00:00 UTC every day
+    - cron: '0 10 * * *'
   # Allow a safe manual run before students trigger it with a code change.
   workflow_dispatch:
 
