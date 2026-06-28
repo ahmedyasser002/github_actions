@@ -81,6 +81,12 @@ jobs:
           echo "App did not become ready in time."
           exit 1
 
+      - name: Validate Container Is Running
+        run: docker ps
+
+      - name: Check health endpoint
+        run: curl http://localhost:8000/health
+
       - name: Stop container
         if: always()
         # Clean up even if an earlier step fails.
