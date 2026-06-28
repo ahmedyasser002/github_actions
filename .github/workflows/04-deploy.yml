@@ -41,7 +41,7 @@ jobs:
       
       - name: Pull image from ECR
         run: |
-          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.event.pull_request.head.sha }}
 
       - name: Start container
         run: |
