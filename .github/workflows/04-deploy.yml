@@ -11,9 +11,6 @@ on:
 
 env:
   IMAGE_NAME: tiny-health-app
-  IMAGE_TAR: tiny-health-app.tar
-  IMAGE_METADATA: image-metadata.env
-  ARTIFACT_NAME: tiny-health-app-image
   CONTAINER_NAME: tiny-health-container
   APP_PORT: "8000"
 
@@ -31,43 +28,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Download build artifact
-        # Download the exact artifact produced by the build run.
-        uses: actions/download-artifact@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          name: ${{ env.ARTIFACT_NAME }}
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ github.event.workflow_run.id }}
-          path: downloaded-artifact
-
-      - name: Show downloaded files
-        # Quick visibility step so students can see what arrived from the build.
-        run: ls -R downloaded-artifact
-
-      - name: Load Docker image
-        # Turn the saved artifact file back into a Docker image.
-        run: docker load --input "downloaded-artifact/${IMAGE_TAR}"
-
-      - name: Read image metadata from build artifact
-        # Read the exact built image reference that the build workflow saved.
-        id: image-metadata
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+      
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+      
+      - name: Pull image from ECR
         run: |
-          source "downloaded-artifact/${IMAGE_METADATA}"
-          echo "image_tag=${IMAGE_TAG}" >> "$GITHUB_OUTPUT"
-          echo "image_reference=${IMAGE_REFERENCE}" >> "$GITHUB_OUTPUT"
-
-      - name: Show exact image reference
-        # Visibility step so students can see what exact package is being delivered.
-        run: echo "Deploying ${{ steps.image-metadata.outputs.image_reference }}"
+          docker pull ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
       - name: Start container
-        # Start the exact same tagged image that the build workflow created.
         run: |
           docker run -d \
             --name "${CONTAINER_NAME}" \
             -p "${APP_PORT}:8000" \
-            "${{ steps.image-metadata.outputs.image_reference }}"
+            "${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}"
 
       - name: Smoke test deployed app
         # Retry a few times because app startup can take a moment.
