@@ -83,7 +83,7 @@ jobs:
       - name: Upload Docker image artifact
         uses: actions/upload-artifact@v4
         with:
-          name: docker-image-${{ matrix.version }}
+          name: docker-image
           path: my-app.tar
           retention-days: 7
 
@@ -102,7 +102,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: trivy-report-${{ matrix.version }}
+          name: trivy-report
           path: trivy-image-report.json
           retention-days: 7
 
