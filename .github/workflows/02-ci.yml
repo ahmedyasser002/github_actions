@@ -85,16 +85,64 @@ jobs:
       - name: Print current time
         run: echo "The current time is ${{ env.NOW }}"
 
+        # Step 1: Scan the raw Dockerfile for misconfigurations/secrets
+      - name: Run Trivy vulnerability scanner (Config Mode)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          hide-progress: true
+          exit-code: '0' # Fail pipeline if misconfigurations are found
+          severity: 'CRITICAL,HIGH'
+
       - name: Build an image from Dockerfile
         run: docker build -t docker.io/ahmedyasser02/my-app:${{ github.sha }} .
-      - name: Run Trivy vulnerability scanner
+    
+      # Save Docker image to a tar file and upload as artifact
+      - name: Save Docker image as tar
+        run: docker save docker.io/ahmedyasser02/my-app:${{ github.sha }} -o my-app.tar
+
+
+      - name: Upload Docker image artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image-${{ matrix.version }}
+          path: my-app.tar
+          retention-days: 7
+
+      - name: Run Trivy vulnerability scanner on image
         uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: 'docker.io/ahmedyasser02/my-app:${{ github.sha }}'
-          format: 'table'
+          format: 'json'                        
+          output: 'trivy-image-report.json'    
           exit-code: '1'
           ignore-unfixed: true
           vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
+
+      # Upload Trivy scan report as artifact
+      - name: Upload Trivy scan report artifact
+        if: always()     
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-report-${{ matrix.version }}
+          path: trivy-image-report.json
+          retention-days: 7
+      # push the image to ECR
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Push image to ECR
+        run: |
+          docker tag docker.io/ahmedyasser02/my-app:${{ github.sha }} \
+            ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
+          docker push ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:${{ github.sha }}
 
 
